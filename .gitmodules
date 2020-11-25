@@ -1,0 +1,3 @@
+[submodule "web/catchbox/checker/enochecker"]
+	path = web/catchbox/checker/enochecker
+	url = https://github.com/enowars/enochecker

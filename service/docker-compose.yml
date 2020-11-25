@@ -1,0 +1,11 @@
+version: '3'
+services:
+  catchbox:
+    build: .
+    volumes:
+      - ./www:/service
+    hostname: catchbox
+    container_name: catchbox-service
+    ports:
+      - "8000:80"
+

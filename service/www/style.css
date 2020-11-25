@@ -1,0 +1,135 @@
+body {
+    margin: 0;
+    overflow: auto;
+    font-size: 12pt;
+}
+
+.mslist li {
+    background: #eee;
+    border: 1px solid black;
+    margin: 5px;
+    padding: 2px;
+    padding-left: 1em;
+    width: 20em;
+    margin-left: 0px;
+    padding-left: 4px;
+    position: relative;
+}
+
+.userlist li {
+    width: 25em;
+}
+
+.mslist li .front {
+    width: auto;
+    display: inline-block;
+    position: absolute:
+    left: 0px;
+    margin: 0px 4px;
+}
+
+.mslist li .back {
+    width: auto;
+    display: inline-block;
+    position: absolute;
+    right: 0px;
+    margin: 0px 4px;
+}
+
+.mslist {
+    padding-left: 2px;
+}
+
+.navbar {
+    width: min(25%, 300px);
+    margin: 0;
+    padding: 0;
+    position: fixed;
+    height: 100%;
+    background-color: #f1f1f1;
+}
+
+.navbar img {
+    padding: 0 5%;
+    width: 90%;
+}
+
+.navbar ul {
+    width: 90%;
+    padding: 0;
+    padding-left: 10%;
+    margin: 0;
+}
+
+.login {
+    color: #007de4;
+    top: 0px;
+    right: 0px;
+    position: absolute;
+    padding: 10px;
+}
+
+.main {
+    margin-left: 25%;
+    width: min(1000px, 75%);
+    min-height: calc(100vh - 30px);
+    position: relative;
+}
+
+.text {
+    padding: 5%;
+    padding-top: 10%;
+    font-size: 10pt;
+}
+
+.footer {
+    bottom: 0px;
+    position: absolute;
+}
+
+ul {
+    list-style-type: none;
+}
+
+.navbar li a {
+    display: block;
+    color: #000;
+    padding: 8px 16px;
+}
+
+a {
+    color:inherit;
+    text-decoration: none;
+}
+
+li a.active {
+    background-color: #007de4;
+    color: white;
+}
+
+li a:hover:not(.active) {
+    background-color: #BBB;
+    color: white;
+}
+
+.employee-pics {
+    margin-top: 20px;
+}
+
+.login-form {
+    width: 40%;
+}
+
+.login-form > input {
+    margin: 0;
+    margin-bottom: 15px;
+}
+
+.login-form > input.txtinput {
+    width: 100%;
+}
+
+.upload-form > input {
+    margin: 0;
+    margin-bottom: 7px;
+}
