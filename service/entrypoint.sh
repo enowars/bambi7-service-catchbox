@@ -1,13 +1,30 @@
-#!/bin/bash
+#!/bin/sh
 
-# generate random pass
-dd if=/dev/urandom count=4 bs=1 2>/dev/null | sha256sum | cut -d' ' -f1 > /service/internal/pass_admin
+sqlite3 db.sqlite << EOF
+CREATE TABLE IF NOT EXISTS users (
+	uid INTEGER PRIMARY KEY,
+	user STRING NOT NULL UNIQUE,
+	pass STRING NOT NULL,
+	auth STRING NOT NULL,
+	creat INTEGER NOT NULL
+);
+CREATE TABLE IF NOT EXISTS files (
+	uid INTEGER SECONDARY KEY,
+	file STRING NOT NULL,
+	content STRING NOT NULL,
+	creat INTEGER NOT NULL,
+	UNIQUE(uid, file) ON CONFLICT ABORT,
+	FOREIGN KEY (uid) REFERENCES users(uid) ON DELETE CASCADE
+);
+INSERT OR IGNORE INTO users (user, pass, auth, creat)
+	VALUES ("betatest", "betatest", "betatest", strftime('%s', 'now'));
+INSERT OR IGNORE INTO files (uid, file, content, creat)
+	VALUES (1, "challenge-hint", "try harder 🤡", strftime('%s', 'now'));
+EOF
+chmod 777 . files db.sqlite
 
-# change permissions
-chown -R www-data:www-data /service/
-
-# start services
+/etc/init.d/cron start
 /etc/init.d/nginx start
-/etc/init.d/php7.2-fpm start
+/etc/init.d/php7.4-fpm start
 
-tail -f /dev/null
+tail -f /var/log/nginx/error.log

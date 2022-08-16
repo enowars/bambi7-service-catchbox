@@ -1,14 +1,14 @@
-FROM ubuntu:18.04
+FROM ubuntu:20.04
 
 RUN apt-get update
 
-# install some extra tools for patching the service
-RUN apt-get install -y vim
-
-# setup service files and run
-RUN apt-get install -y nginx php-fpm
+RUN apt-get install -y nginx php-fpm php-sqlite3 sqlite3 cron
 COPY nginx.conf /etc/nginx/nginx.conf
 COPY entrypoint.sh /root
 RUN chmod +x /root/entrypoint.sh
 
+RUN echo "SHELL=/bin/bash" > /etc/cron.d/cleaner
+RUN echo "* * * * * www-data /service/cleaner /service/www" >> /etc/cron.d/cleaner
+
+WORKDIR /service
 ENTRYPOINT /root/entrypoint.sh
