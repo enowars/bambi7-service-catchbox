@@ -1,10 +1,16 @@
-FROM python:3.7-slim
-LABEL maintainer="ENOFLAG <mail@enoflag.de>"
+FROM python:3.9-buster
 
-# copy our files in.
+RUN useradd -ms /bin/bash -u 1000 checker
+
+# fix pycurses terminfo warnings
+ENV TERM=linux
+ENV TERMINFO=/etc/terminfo
+
+COPY ./src/ /checker/
 WORKDIR /checker
-COPY ./requirements.txt /checker/requirements.txt
-RUN pip3 install -r requirements.txt
-COPY . .
+RUN chown checker -R /checker
 
-ENTRYPOINT [ "python", "checker.py" ]
+USER checker
+RUN python3 -m pip install --no-warn-script-location -r requirements.txt
+
+ENTRYPOINT [ "/home/checker/.local/bin/gunicorn", "-c", "gunicorn.conf.py", "checker:app" ]

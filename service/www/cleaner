@@ -3,8 +3,12 @@
 cd ${1:-.}
 
 while IFS= read -r row; do
-	rm -rf "/service/files/$row"
-done < <(sqlite3 db.sqlite "SELECT auth FROM users WHERE creat < strftime('%s', 'now') - 600")
+	rm -rf "/service/uploads/$row"
+done < <(sqlite3 db.sqlite "SELECT dir FROM users WHERE creat < strftime('%s', 'now') - 780")
 
-sqlite3 db.sqlite "DELETE FROM users WHERE creat < strftime('%s', 'now') - 600"
+while IFS= read -r row; do
+	rm -rf "/service/reports/$row"
+done < <(sqlite3 db.sqlite3 "SELECT file FROM reports WHERE creat < strftime('%s', 'now') - 780")
+
+sqlite3 db.sqlite "DELETE FROM users WHERE creat < strftime('%s', 'now') - 780"
 

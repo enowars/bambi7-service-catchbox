@@ -1,2 +1,8 @@
-www/files
 www/db.sqlite
+www/files/*
+www/reports/*
+!www/files/54b8617eca0e54c7d3c8e6732c6b687a
+!www/files/4307ab44204de40235bad8c66cce0ae9
+!www/files/6ed554592bbf418df53acb9317644d58
+!www/files/bdd921efdb71adfc8c097a7ce0718eb3
+!www/reports/2a4db6742253d94be4cf0e56c971fced

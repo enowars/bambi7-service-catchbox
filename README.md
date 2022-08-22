@@ -2,10 +2,22 @@
 
 Simple file upload service.
 
+Flag user- and filenames are given as attack info.
+
+Flagstore 1 is stored in a file from the flag user.
+
+Flagstore 2 is stored in a report created by the flag user.
+
 ### VULNS
 
-1. session cookie value is generated based on user creation time, which is shown on "users" page
+1. upload file directory name is generated based on creation time
+   (can be bruteforced using user creation time)
 
-2. path traversal using file name allows downloading (truncated) error log where credentials are logged
+2. upload filename path traversal allows for reading reports and uploads
+   (filename check is fumbled via php type juggling and wrong variable use)
 
-3. path traversal using nginx misconfiguration allows downloading sqlite db
+3. nginx uploads alias allows arbitrary file read in /service (except database)
+
+4. (theoretically) hash collision on flag user's name allows accessing report,
+   but computation complexity is too high even for a weak hash such as md5
+

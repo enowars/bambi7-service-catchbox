@@ -7,6 +7,10 @@ COPY nginx.conf /etc/nginx/nginx.conf
 COPY entrypoint.sh /root
 RUN chmod +x /root/entrypoint.sh
 
+ENV TZ=UTC
+RUN ln -sf /usr/share/zoneinfo/$TZ /etc/localtime
+RUN echo $TZ > /etc/timezone
+
 RUN echo "SHELL=/bin/bash" > /etc/cron.d/cleaner
 RUN echo "* * * * * www-data /service/cleaner /service/www" >> /etc/cron.d/cleaner
 

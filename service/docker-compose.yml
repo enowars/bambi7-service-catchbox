@@ -7,5 +7,5 @@ services:
     hostname: catchbox
     container_name: catchbox-service
     ports:
-      - "8000:80"
+      - "9090:80"
 
