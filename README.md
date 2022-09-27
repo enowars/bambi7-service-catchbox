@@ -18,6 +18,8 @@ Flagstore 2 is stored in a report created by the flag user.
 
 3. nginx uploads alias allows arbitrary file read in /service (except database)
 
-4. (theoretically) hash collision on flag user's name allows accessing report,
-   but computation complexity is too high even for a weak hash such as md5
+4. theoretically hash collision on flag user's name allows accessing report,
+   but computation complexity is too high even for given round time
+   (easy to find two strings with same md5 hash, but difficult to find
+   'complement' for a given string)
 

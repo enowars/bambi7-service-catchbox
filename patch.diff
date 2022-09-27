@@ -1,0 +1,35 @@
+diff --git a/service/nginx.conf b/service/nginx.conf
+index 0233eae..54ec102 100644
+--- a/service/nginx.conf
++++ b/service/nginx.conf
+@@ -26,7 +26,7 @@ http {
+ 		}
+ 
+ 		location /uploads {
+-			alias /service/files/;
++			alias /service/files;
+ 		}
+ 
+ 		location /reports {
+diff --git a/service/www/index.php b/service/www/index.php
+index 33726c9..be4d3f3 100644
+--- a/service/www/index.php
++++ b/service/www/index.php
+@@ -105,7 +105,7 @@ function serv_post() {
+ 			. "VALUES (:user, :pass, :creat, :auth)");
+ 		$q->bindValue(":user", $_POST["username"], SQLITE3_TEXT);
+ 		$q->bindValue(":pass", $_POST["password"], SQLITE3_TEXT);
+-		$q->bindValue(":creat", time(), SQLITE3_INTEGER);
++		$q->bindValue(":creat", time() * 10000 + random_int(0, 10000), SQLITE3_INTEGER);
+ 		$q->bindValue(":auth", $auth, SQLITE3_TEXT);
+ 		$res = $q->execute();
+ 		if ($res === false) {
+@@ -205,7 +205,7 @@ function serv_post() {
+ 		$q = $db->prepare("INSERT INTO files (uid, file, dir, creat) "
+ 			. "VALUES (:uid, :file, :dir, :creat)");
+ 		$q->bindValue(":uid", $uid, SQLITE3_INTEGER);
+-		$q->bindValue(":file", $_POST["filename"], SQLITE3_TEXT);
++		$q->bindValue(":file", $filename, SQLITE3_TEXT);
+ 		$q->bindValue(":dir", $dir, SQLITE3_TEXT);
+ 		$q->bindValue(":creat", time(), SQLITE3_INTEGER);
+ 		$res = $q->execute();
