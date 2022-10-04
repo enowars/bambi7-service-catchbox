@@ -1,5 +1,7 @@
 FROM python:3.9-buster
 
+RUN apt update && apt install -y php
+
 RUN useradd -ms /bin/bash -u 1000 checker
 
 # fix pycurses terminfo warnings
