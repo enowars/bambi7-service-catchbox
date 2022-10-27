@@ -67,7 +67,7 @@ def assert_status_code(logger: LoggerAdapter, r: Response,
             + f"Extra info: {str(extra)}\n{r.text}")
         if errmsg is None:
             errmsg = f"{r.request.method} {r.request.url.path} failed"
-        raise MumbleException(msg)
+        raise MumbleException(errmsg)
 
 @checker.putflag(0)
 async def putflag_file(task: PutflagCheckerTaskMessage, logger: LoggerAdapter,

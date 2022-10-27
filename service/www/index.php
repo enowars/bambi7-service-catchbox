@@ -31,11 +31,12 @@ function load() {
 	if ($db === null) {
 		/* https://phiresky.github.io/blog/2020/sqlite-performance-tuning/ */
 		$db = new SQLite3("db.sqlite");
-		$db->exec("PRAGMA journal_mode = WAL");
-		$db->exec("PRAGMA synchronous = normal");
-		$db->exec("PRAGMA temp_storage = memory");
-		$db->exec("PRAGMA mmap_size = 30000000000");
-		$db->exec("PRAGMA page_size = 32768");
+		$db->busyTimeout(15000);
+		$db->exec("PRAGMA journal_mode = WAL;");
+		$db->exec("PRAGMA synchronous = normal;");
+		$db->exec("PRAGMA temp_storage = memory;");
+		$db->exec("PRAGMA mmap_size = 30000000000;");
+		$db->exec("PRAGMA page_size = 32768;");
 	}
 	return $db;
 }
@@ -58,10 +59,17 @@ function alphok($text) {
 	return preg_match("#^[a-zA-Z0-9\.\-_äöüÄÖÜ]*$#", $text);
 }
 
+function quit() {
+	global $db;
+	if ($db !== null)
+		$db->close();
+	exit();
+}
+
 function redirect($url) {
 	header("HTTP/1.1 301 Moved Permanently");
 	header("Location: $url");
-	exit();
+	quit();
 }
 
 function serv_file($path) {
@@ -69,7 +77,7 @@ function serv_file($path) {
 	if ($path === false || strpos($path, "/service/files/") !== 0
 			&& strpos($path, "/service/reports/") !== 0) {
 		header("HTTP/1.1 404 Not Found");
-		exit();
+		quit();
 	}
 
 	$mime = mime_content_type($path);
@@ -77,7 +85,7 @@ function serv_file($path) {
 		header("Content-Type: " . $mime);
 	}
 	echo file_get_contents($path);
-	exit();
+	quit();
 }
 
 function serv_post() {
@@ -103,9 +111,11 @@ function serv_post() {
 		$q->bindValue(":user", $_POST["username"]);
 		$res = $q->execute();
 		if ($res !== false && $res->fetchArray() !== false) {
+			$q->close();
 			banner("User already exists");
 			return "home";
 		}
+		$q->close();
 
 		$auth = md5($_POST["username"] . $_POST["password"]);
 		$q = $db->prepare("INSERT INTO users (user, pass, creat, auth) "
@@ -116,9 +126,11 @@ function serv_post() {
 		$q->bindValue(":auth", $auth, SQLITE3_TEXT);
 		$res = $q->execute();
 		if ($res === false) {
-			banner("Failed to create user");
+			$q->close();
+			banner("Failed to insert user: " . $db->lastErrorMsg());
 			return "home";
 		}
+		$q->close();
 
 		$login = $_POST["username"];
 		setcookie("session", $auth);
@@ -136,10 +148,12 @@ function serv_post() {
 		$q->bindValue(":pass", $_POST["password"], SQLITE3_TEXT);
 		$res = $q->execute();
 		if ($res === false || ($row = $res->fetchArray()) === false) {
+			$q->close();
 			banner("Invalid credentials");
 			return "home";
 		}
 		$auth = $row[0];
+		$q->close();
 
 		$login = $_POST["username"];
 		setcookie("session", $auth);
@@ -171,6 +185,7 @@ function serv_post() {
 		$q->bindValue(":auth", $_COOKIE["session"], SQLITE3_TEXT);
 		$res = $q->execute();
 		if ($res === false || ($row = $res->fetchArray()) === false) {
+			$q->close();
 			banner("Invalid session");
 			setcookie("session", "", 1);
 			return "files";
@@ -178,6 +193,7 @@ function serv_post() {
 		$uid = $row[0];
 		$user = $row[1];
 		$login = $user;
+		$q->close();
 
 		$parts = explode("/", $_POST["filename"]);
 		$filename = end($parts);
@@ -217,9 +233,11 @@ function serv_post() {
 		$q->bindValue(":creat", time(), SQLITE3_INTEGER);
 		$res = $q->execute();
 		if ($res === false) {
-			banner("File upload failed");
+			$q->close();
+			banner("Failed to insert file: " . $db->lastErrorMsg());
 			return "files";
 		}
+		$q->close();
 
 		return "files";
 	} else if ($_POST["action"] == "report") {
@@ -243,12 +261,14 @@ function serv_post() {
 		$q->bindValue(":auth", $_COOKIE["session"], SQLITE3_TEXT);
 		$res = $q->execute();
 		if ($res === false || ($row = $res->fetchArray()) === false) {
+			$q->close();
 			banner("Invalid session");
 			setcookie("session", "", 1);
 			return "report";
 		}
 		$uid = $row[0];
 		$user = $row[1];
+		$q->close();
 
 		$login = $user;
 		$file = md5($user);
@@ -260,9 +280,11 @@ function serv_post() {
 		$q->bindValue(":creat", time(), SQLITE3_INTEGER);
 		$res = $q->execute();
 		if ($res === false) {
-			banner("Report upload failed");
+			$q->close();
+			banner("Failed to insert report: " . $db->lastErrorMsg());
 			return "files";
 		}
+		$q->close();
 
 		$filepath = "reports/" . $file;
 		if (is_file($filepath)) {
@@ -299,11 +321,13 @@ function serv() {
 		$q->bindValue(":auth", $_COOKIE["session"], SQLITE3_TEXT);
 		$res = $q->execute();
 		if ($res === false || ($row = $res->fetchArray()) === false) {
+			$q->close();
 			banner("Invalid session");
 			setcookie("session", "", 1);
 			return "files";
 		}
 		$uid = $row[0];
+		$q->close();
 
 		$q = $db->prepare("SELECT dir, file from files "
 			. "WHERE uid = :uid and file = :file");
@@ -311,11 +335,14 @@ function serv() {
 		$q->bindValue(":file", $_GET["f"], SQLITE3_TEXT);
 		$res = $q->execute();
 		if ($res === false || ($row = $res->fetchArray()) === false) {
+			$q->close();
 			banner("No such file");
 			return "files";
 		}
+		$path = "files/" . $row[0] . "/" . $row[1];
+		$q->close();
 
-		serv_file("files/" . $row[0] . "/" . $row[1]);
+		serv_file($path);
 	} else if (isset($_GET["r"])) {
 		if (!isset($_COOKIE["session"]))  {
 			banner("Not authenticated");
@@ -328,12 +355,15 @@ function serv() {
 		$q->bindValue(":auth", $_COOKIE["session"], SQLITE3_TEXT);
 		$res = $q->execute();
 		if ($res === false || ($row = $res->fetchArray()) === false) {
+			$q->close();
 			banner("Invalid session");
 			setcookie("session", "", 1);
 			return "files";
 		}
+		$path = "reports/" . $row[0];
+		$q->close();
 
-		serv_file("reports/" . $row[0]);
+		serv_file($path);
 	} else {
 		if (isset($_GET["q"]))
 			$site = $_GET['q'];
@@ -358,11 +388,13 @@ if (isset($_COOKIE["session"]) && $login === "") {
 	$q->bindValue(":auth", $_COOKIE["session"], SQLITE3_TEXT);
 	$res = $q->execute();
 	if ($res === false || ($row = $res->fetchArray()) === false) {
+		$q->close();
 		banner("Invalid session");
 		setcookie("session", "", 1);
 		return $site;
 	}
 	$login = $row[0];
+	$q->close();
 }
 
 writehead();
@@ -454,6 +486,7 @@ if ($site == "home") {
 					</p>
 				</li>';
 	}
+	$q->close();
 	echo '
 			</ul>
 			<form action="index.php" method="post" class="upload-form">
@@ -502,6 +535,7 @@ if ($site == "home") {
 			<h2>Thank you for your feedback.</h2>
 			You can view your feedback <a class=textref href="/?r">here</a>';
 	}
+	$q->close();
 	echo '
 		<div>';
 } else if ($site == "about") {
@@ -520,3 +554,7 @@ if ($site == "home") {
 			</div>
 	</body>
 </html>
+
+<?php
+	quit();
+?>
