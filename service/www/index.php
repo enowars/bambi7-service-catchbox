@@ -28,8 +28,15 @@ srand(time());
 
 function load() {
 	global $db;
-	if ($db === null)
+	if ($db === null) {
+		/* https://phiresky.github.io/blog/2020/sqlite-performance-tuning/ */
 		$db = new SQLite3("db.sqlite");
+		$db->exec("PRAGMA journal_mode = WAL");
+		$db->exec("PRAGMA synchronous = normal");
+		$db->exec("PRAGMA temp_storage = memory");
+		$db->exec("PRAGMA mmap_size = 30000000000");
+		$db->exec("PRAGMA page_size = 32768");
+	}
 	return $db;
 }
 

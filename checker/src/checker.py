@@ -26,7 +26,7 @@ from subprocess import Popen, PIPE
 
 import string
 
-from typing import Optional
+from typing import Any, Optional
 
 import random
 
@@ -51,11 +51,23 @@ def str2epoch(text: str) -> int:
     date = dateutil.parser.parse(text + " UTC")
     return int(date.timestamp())
 
+def parse_html(logger: LoggerAdapter, r: Response) -> BeautifulSoup:
+    try:
+        return BeautifulSoup(r.text, "html.parser")
+    except:
+        logger.error(f"Invalid html from {r.request.method} {r.request.url.path}\n" \
+            + r.text)
+        raise MumbleException(f"Invalid html ({r.request.method} {r.request.url.path})")
+
 def assert_status_code(logger: LoggerAdapter, r: Response,
-        status_code: int, action: str) -> None:
-    if (r.status_code != status_code):
-        logger.warn(f"Bad service response for {action}:\n{r.text}")
-        raise MumbleException(status[0].upper() + status[1:] + " failed")
+        code: int, errmsg: Optional[str], extra: Any = "") -> None:
+    if r.status_code != code:
+        logger.error(f"Bad service response for " \
+            + f"{r.request.method} {r.request.url.path}:\n" \
+            + f"Extra info: {str(extra)}\n{r.text}")
+        if errmsg is None:
+            errmsg = f"{r.request.method} {r.request.url.path} failed"
+        raise MumbleException(msg)
 
 @checker.putflag(0)
 async def putflag_file(task: PutflagCheckerTaskMessage, logger: LoggerAdapter,
@@ -63,12 +75,12 @@ async def putflag_file(task: PutflagCheckerTaskMessage, logger: LoggerAdapter,
     username, password = noise(10, 20), noise(20, 30)
     data = { "action": "register", "username": username, "password": password }
     r = await client.post("/index.php", data=data)
-    assert_status_code(logger, r, 200, "register")
+    assert_status_code(logger, r, 200, "Register failed", extra=data)
 
     filename, content = noise(20, 30), task.flag
     data = { "action": "upload", "filename": filename, "content": content }
     r = await client.post("/index.php", data=data)
-    assert_status_code(logger, r, 200, "file upload")
+    assert_status_code(logger, r, 200, "File upload", extra=data)
 
     await db.set("info", (username, password, filename))
 
@@ -76,7 +88,7 @@ async def putflag_file(task: PutflagCheckerTaskMessage, logger: LoggerAdapter,
 
 @checker.getflag(0)
 async def getflag_file(task: GetflagCheckerTaskMessage,
-        client: AsyncClient, db: ChainDB) -> None:
+        logger: LoggerAdapter, client: AsyncClient, db: ChainDB) -> None:
     try:
         username, password, filename = await db.get("info")
     except KeyError:
@@ -84,24 +96,24 @@ async def getflag_file(task: GetflagCheckerTaskMessage,
 
     data = { "action": "login", "username": username, "password": password }
     r = await client.post("/index.php", data=data)
-    assert_status_code(logger, r, 200, "login")
+    assert_status_code(logger, r, 200, "Login failed", extra=data)
 
     r = await client.get(f"/index.php?f={filename}")
-    assert_status_code(logger, r, 200, "file download")
+    assert_status_code(logger, r, 200, "File download failed", extra=filename)
 
     assert_in(task.flag, r.text, "Flag missing")
 
 @checker.putflag(1)
-async def putflag_report(task: PutflagCheckerTaskMessage, logger: LoggerAdapter,
-        client: AsyncClient, db: ChainDB) -> str:
+async def putflag_report(task: PutflagCheckerTaskMessage,
+        logger: LoggerAdapter, client: AsyncClient, db: ChainDB) -> str:
     username, password = noise(10, 20), noise(20, 30)
     data = { "action": "register", "username": username, "password": password }
     r = await client.post("/index.php", data=data)
-    assert_status_code(logger, r, 200, "register")
+    assert_status_code(logger, r, 200, "Register failed", extra=data)
 
     data = { "action": "report", "content": task.flag }
     r = await client.post("/index.php", data=data)
-    assert_status_code(logger, r, 200, "upload")
+    assert_status_code(logger, r, 200, "Upload failed", extra=data)
 
     await db.set("info", (username, password))
 
@@ -117,10 +129,10 @@ async def getflag_report(task: GetflagCheckerTaskMessage,
 
     data = { "action": "login", "username": username, "password": password }
     r = await client.post("/index.php", data=data)
-    assert_status_code(logger, r, 200, "login")
+    assert_status_code(logger, r, 200, "Login failed", extra=data)
 
     r = await client.get(f"/index.php?r")
-    assert_status_code(logger, r, 200, "report download")
+    assert_status_code(logger, r, 200, "Report download failed")
 
     assert_in(task.flag, r.text, "Flag missing")
 
@@ -130,12 +142,12 @@ async def putnoise_file(task: PutnoiseCheckerTaskMessage,
     username, password = noise(10, 20), noise(20, 30)
     data = { "action": "register", "username": username, "password": password }
     r = await client.post("/index.php", data=data)
-    assert_status_code(logger, r, 200, "register")
+    assert_status_code(logger, r, 200, "Register failed", extra=data)
 
     filename, content = noise(20, 30), noise(20, 30)
     data = { "action": "upload", "filename": filename, "content": content }
     r = await client.post("/index.php", data=data)
-    assert_status_code(logger, r, 200, "file upload")
+    assert_status_code(logger, r, 200, "File upload failed", extra=data)
 
     await db.set("info", (username, password, filename, content))
 
@@ -150,12 +162,12 @@ async def getnoise_file(task: GetnoiseCheckerTaskMessage,
 
     data = { "action": "login", "username": username, "password": password }
     r = await client.post("/index.php", data=data)
-    assert_status_code(logger, r., 200, "login")
+    assert_status_code(logger, r, 200, "Login failed", extra=data)
 
     r = await client.get("/index.php?q=files")
-    assert_status_code(logger, r, 200, "files query")
+    assert_status_code(logger, r, 200, "Files query failed")
 
-    soup = BeautifulSoup(r.text, "html.parser")
+    soup = parse_html(logger, r)
     files = [v.select("a") for v in soup.select("ul.filelist > li")]
     assert_equals(all([len(v) == 2 for v in files]), True, "noise missing")
 
@@ -164,12 +176,13 @@ async def getnoise_file(task: GetnoiseCheckerTaskMessage,
     assert_equals(type(urls[filename]), str, "noise missing")
 
     r = await client.get(f"/index.php?f={filename}")
-    assert_status_code(logger, r, 200, "file download")
+    assert_status_code(logger, r, 200, "File download failed", extra=filename)
     assert_in(noise, r.text, "Noise missing")
 
     anon = await di.get(AsyncClient)
     r = await anon.get(urls[filename])
-    assert_status_code(logger, r, 200, "public file retrieve")
+    assert_status_code(logger, r, 200, "Public url invalid",
+        extra={"filename": filename, "url": urls[filename]})
     assert_in(noise, r.text, "Noise missing")
 
 @checker.exploit(0)
@@ -182,9 +195,9 @@ async def exploit_file_creat(task: ExploitCheckerTaskMessage,
     _, flaguser, _, flagfile = task.attack_info.split()
 
     r = await client.get("/?q=users")
-    assert_status_code(logger, r, 200, "query users")
+    assert_status_code(logger, r, 200, "Users listing failed")
 
-    soup = BeautifulSoup(r.text, "html.parser")
+    soup = parse_html(logger, r)
     users = [v.children for v in soup.select("ul.userlist > li")]
     times = { a.text.strip(): str2epoch(b.text.strip()) for a,b in users }
 
@@ -222,12 +235,12 @@ async def exploit_report_path(task: ExploitCheckerTaskMessage,
     username, password = noise(10, 20), noise(20, 30)
     data = { "action": "register", "username": username, "password": password }
     r = await client.post("/index.php", data=data)
-    assert_status_code(logger, r, 200, "register")
+    assert_status_code(logger, r, 200, "Register failed", extra=data)
 
     filepath = f"../../reports/{reportfile}"
     data = { "action": "upload", "filename": filepath, "content": "exploit2!" }
     r = await client.post("/index.php", data=data)
-    assert_status_code(logger, r, 200, "path traversal")
+    assert_status_code(logger, r, 200, "Path traversal", extra=data)
 
     r = await client.get(f"/index.php?f={filepath}")
     if flag := searcher.search_flag(r.text):
