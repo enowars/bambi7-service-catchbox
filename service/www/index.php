@@ -176,7 +176,7 @@ function serv_post() {
 		}
 
 		if (strlen($_POST["content"]) > 1024) {
-			banner("Invalid content");
+			banner("File too large");
 			return "files";
 		}
 
@@ -252,7 +252,7 @@ function serv_post() {
 		}
 
 		if (strlen($_POST["content"]) > 1024) {
-			banner("Invalid content");
+			banner("Report too long");
 			return "files";
 		}
 
@@ -526,7 +526,7 @@ if ($site == "home") {
 			<h2>We would love to hear from you!</h2>
 			<form action="index.php" method="post" class="upload-form">
 				<h2>Submit feedback:</h2>
-				<input type=text name="content" placeholder="content"></input><br>
+				<input type=text name="content"></input><br>
 				<input type=hidden name="action" value="report">
 				<input type=submit>
 			</form>';

@@ -1,4 +1,4 @@
-## CatchBox
+## Catchbox
 
 *The logical successor to Dropbox.*
 
@@ -13,16 +13,19 @@ Flagstore 2 is a report created by the flag user.
 ### Vulnerabilities
 
 1. The random value used to generate the upload directory name is seeded
-   using the time of the request, which can be inferred (with minimal bruteforce)
-   from the user creation time in the 'users' endpoint. (flagstore 1)
+   using the time of the request, which can be inferred with minimal,
+   offline bruteforce from the user creation time in the 'users'endpoint.
+   (flagstore 1)
 
 2. The upload endpoint has a path traversal that allows reading of other
-   users' reports and uploads. There is a type confusion between the
-   return of strpos and false, which allows paths like "*/../*" to bypass
-   the check since the index is 0 (== false). Additionally, the unsanitized
-   parameter is stored in the database. (flagstore 2)
+   users' reports and uploads. There is a type confusion between the return of
+   strpos and false, which allows paths like "*/../*" to bypass the check
+   since the index of ".." in the path component is 0 (== false). Additionally,
+   the unsanitized parameter is stored in the database. (flagstore 2)
 
 3. The nginx /uploads alias allows for arbitrary file read in /service
-   (except for the database), since /upload../* expands
-   to /service/files/../. (flagstore 2)
+   (except for the database), since /upload../* expands to /service/files/../.
+   This allows reading user reports and uploads. Additionally, it allows teams
+   to download index.php and steal and circumvent patches from other teams.
+   (flagstore 2)
 
