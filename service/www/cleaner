@@ -6,7 +6,7 @@ while IFS= read -r row; do
 		rm -rf "$path"
 	fi
 done < <(sqlite3 /service/db.sqlite \
-	"SELECT dir FROM files WHERE creat < strftime('%s', 'now') - 10")
+	"SELECT dir FROM files WHERE delet < strftime('%s', 'now')")
 
 while IFS= read -r row; do
 	path=$(realpath "/service/reports/$row")
@@ -14,8 +14,8 @@ while IFS= read -r row; do
 		rm -rf "$path"
 	fi
 done < <(sqlite3 /service/db.sqlite \
-	"SELECT file FROM reports WHERE creat < strftime('%s', 'now') - 10")
+	"SELECT file FROM reports WHERE delet < strftime('%s', 'now')")
 
 sqlite3 /service/db.sqlite "PRAGMA foreign_keys = ON; \
-	DELETE FROM users WHERE creat < strftime('%s', 'now') - 10"
+	DELETE FROM users WHERE delet < strftime('%s', 'now')"
 
