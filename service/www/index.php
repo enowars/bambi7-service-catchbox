@@ -19,7 +19,8 @@ $head = <<<EOF
 <html>
 <head>
 	<title>Catchbox</title>
-	<link rel="stylesheet" href="/style.css">
+	<link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+	<link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
 EOF;
@@ -32,11 +33,13 @@ function load() {
 		/* https://phiresky.github.io/blog/2020/sqlite-performance-tuning/ */
 		$db = new SQLite3("db.sqlite");
 		$db->busyTimeout(15000);
-		$db->exec("PRAGMA journal_mode = WAL;");
-		$db->exec("PRAGMA synchronous = normal;");
-		$db->exec("PRAGMA temp_storage = memory;");
-		$db->exec("PRAGMA mmap_size = 30000000000;");
-		$db->exec("PRAGMA page_size = 32768;");
+		$db->exec("PRAGMA journal_mode = WAL");
+		$db->exec("PRAGMA synchronous = normal");
+		$db->exec("PRAGMA temp_storage = memory");
+		$db->exec("PRAGMA mmap_size = 30000000000");
+		$db->exec("PRAGMA page_size = 32768");
+		/* for ON DELETE CASCADE */
+		$db->exec("PRAGMA foreign_keys = ON");
 	}
 	return $db;
 }

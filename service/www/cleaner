@@ -1,14 +1,21 @@
 #!/bin/bash
 
-cd ${1:-.}
+while IFS= read -r row; do
+	path=$(realpath "/service/files/$row")
+	if [[ "$(dirname "$path")" -ef "/service/files" ]]; then
+		rm -rf "$path"
+	fi
+done < <(sqlite3 /service/db.sqlite \
+	"SELECT dir FROM files WHERE creat < strftime('%s', 'now') - 10")
 
 while IFS= read -r row; do
-	rm -rf "/service/uploads/$row"
-done < <(sqlite3 db.sqlite "SELECT dir FROM users WHERE creat < strftime('%s', 'now') - 780")
+	path=$(realpath "/service/reports/$row")
+	if [ "$(dirname "$path")" -ef "/service/reports" ]; then
+		rm -rf "$path"
+	fi
+done < <(sqlite3 /service/db.sqlite \
+	"SELECT file FROM reports WHERE creat < strftime('%s', 'now') - 10")
 
-while IFS= read -r row; do
-	rm -rf "/service/reports/$row"
-done < <(sqlite3 db.sqlite3 "SELECT file FROM reports WHERE creat < strftime('%s', 'now') - 780")
-
-sqlite3 db.sqlite "DELETE FROM users WHERE creat < strftime('%s', 'now') - 780"
+sqlite3 /service/db.sqlite "PRAGMA foreign_keys = ON; \
+	DELETE FROM users WHERE creat < strftime('%s', 'now') - 10"
 
