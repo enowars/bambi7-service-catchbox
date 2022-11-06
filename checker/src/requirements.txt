@@ -1,4 +1,4 @@
 beautifulsoup4==4.11.1
-enochecker3==0.7.0
+enochecker3>=0.7.0,<0.8.0
 httpx==0.22.0
 python_dateutil==2.8.2
