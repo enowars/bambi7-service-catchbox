@@ -1,4 +1,5 @@
-version: '3'
+name: catchbox
+
 services:
   catchbox:
     build: .
@@ -9,3 +10,6 @@ services:
     ports:
       - 9090:80
 
+networks:
+  default:
+    name: catchbox

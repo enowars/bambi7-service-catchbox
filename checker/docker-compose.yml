@@ -1,4 +1,5 @@
-version: '2.1'
+name: catchbox-checker
+
 services:
   catchbox-checker:
     build: .
@@ -20,3 +21,7 @@ services:
     environment:
       MONGO_INITDB_ROOT_USERNAME: catchbox_checker
       MONGO_INITDB_ROOT_PASSWORD: catchbox_checker
+
+networks:
+  default:
+    name: catchbox_checker
