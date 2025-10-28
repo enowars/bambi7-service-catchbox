@@ -1,7 +1,7 @@
 #!/bin/bash
 
 touch /service/db.sqlite
-sqlite3 /service/db.sqlite < init.sql
+sqlite3 /service/db.sqlite < /service/init.sql
 
 chmod 777 /service/{.,files,reports,db.sqlite}
 

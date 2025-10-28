@@ -1,20 +1,20 @@
 #!/bin/bash
 
-while IFS= read -r row; do
-	path=$(realpath "/service/files/$row")
-	if [[ "$(dirname "$path")" -ef "/service/files" ]]; then
-		rm -rf "$path"
-	fi
-done < <(sqlite3 /service/db.sqlite \
-	"SELECT dir FROM files WHERE delet < strftime('%s', 'now')")
-
-while IFS= read -r row; do
-	path=$(realpath "/service/reports/$row")
-	if [ "$(dirname "$path")" -ef "/service/reports" ]; then
-		rm -rf "$path"
-	fi
-done < <(sqlite3 /service/db.sqlite \
-	"SELECT file FROM reports WHERE delet < strftime('%s', 'now')")
+#while IFS= read -r row; do
+#	path=$(realpath "/service/files/$row")
+#	if [[ "$(dirname "$path")" -ef "/service/files" ]]; then
+#		rm -rf "$path"
+#	fi
+#done < <(sqlite3 /service/db.sqlite \
+#	"SELECT dir FROM files WHERE delet < strftime('%s', 'now')")
+#
+#while IFS= read -r row; do
+#	path=$(realpath "/service/reports/$row")
+#	if [ "$(dirname "$path")" -ef "/service/reports" ]; then
+#		rm -rf "$path"
+#	fi
+#done < <(sqlite3 /service/db.sqlite \
+#	"SELECT file FROM reports WHERE delet < strftime('%s', 'now')")
 
 sqlite3 /service/db.sqlite "PRAGMA foreign_keys = ON; \
 	DELETE FROM users WHERE delet < strftime('%s', 'now')"
